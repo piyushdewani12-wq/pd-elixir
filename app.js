@@ -48,3 +48,6 @@ function adminLogin(e){
   }
 }
 window.openAdmin = openAdmin;
+window.openAdmin = openAdmin;
+window.closeModal = closeModal;
+window.adminLogin = adminLogin;

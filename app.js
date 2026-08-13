@@ -47,3 +47,4 @@ function adminLogin(e){
     toast('Wrong admin details');
   }
 }
+window.openAdmin = openAdmin;

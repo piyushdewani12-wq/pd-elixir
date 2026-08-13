@@ -1,4 +1,3 @@
-(() => {
 const names={
 Men:['Noir Intense','Royal Oud','Azure Blue','Imperial Leather','Midnight Musk','Sultan Noir','Cedar Crown','Velvet Smoke','Amber Knight','Ocean Drive','Black Vetiver','Urban Oud','Royal Amber','Nightfall','Spice Route','Leather Reserve','Dark Cedar','Eclipse','Gentleman','Blue Monarch','Oud Legend','Silver Musk','Golden Oud','Sapphire Night','Executive','Black Saffron','Crown','Desert King','Classic Man','Platinum Oud','Voyage','Iconic','Dark Rose','Atlas','Majestic','Steel','Heritage'],
 Women:['Velvet Rose','Musk Whisper','Rose Royale','Blush Bloom','Vanilla Muse','Pearl Jasmine','Golden Petals','Satin','Blooming Oud','Pink Amber','Luna','Divine Rose','Cashmere','White Blossom','Royal Lily','Sweet Noir','Floral Veil','Amber Rose','Crystal','Eternal Bloom','Muse','Silk','Rosewood','Dream','Chérie','Ivory Bloom','Golden Femme','Petal Noir','Grace','Belle','Radiance','Blush Oud'],

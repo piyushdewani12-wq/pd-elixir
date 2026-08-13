@@ -529,3 +529,4 @@ function toast(msg){
 updateCounts();
 renderFeatured();
 renderProducts();
+})();

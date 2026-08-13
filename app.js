@@ -25,3 +25,25 @@ function trackOrder(){openModal(`<button class="close" onclick="closeModal()">×
 function subscribe(e){e.preventDefault();e.target.reset();toast('You are subscribed to PD Elixir updates')}
 function openModal(html){document.getElementById('modalContent').innerHTML=html;document.getElementById('modal').classList.add('open')}function closeModal(){document.getElementById('modal').classList.remove('open')}function toast(msg){let t=document.createElement('div');t.className='toast';t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),2200)}
 updateCounts();renderFeatured();renderProducts();
+function openAdmin(){
+  openModal(`
+    <button class="close" onclick="closeModal()">×</button>
+    <h2>Admin Login</h2>
+    <form class="form" onsubmit="adminLogin(event)">
+      <input name="email" type="email" placeholder="Admin Email" required>
+      <input name="password" type="password" placeholder="Password" required>
+      <button class="btn gold">Login</button>
+    </form>
+  `);
+}
+
+function adminLogin(e){
+  e.preventDefault();
+  let f=new FormData(e.target);
+  if(f.get('email')==='admin@pdelixir.com' && f.get('password')==='123456'){
+    closeModal();
+    toast('Admin login successful');
+  }else{
+    toast('Wrong admin details');
+  }
+}

@@ -1,53 +1,532 @@
-const names={Men:['Noir Intense','Royal Oud','Azure Blue','Imperial Leather','Midnight Musk','Sultan Noir','Cedar Crown','Velvet Smoke','Amber Knight','Ocean Drive','Black Vetiver','Urban Oud','Royal Amber','Nightfall','Spice Route','Leather Reserve','Dark Cedar','Eclipse','Gentleman','Blue Monarch','Oud Legend','Silver Musk','Golden Oud','Sapphire Night','Executive','Black Saffron','Crown','Desert King','Classic Man','Platinum Oud','Voyage','Iconic','Dark Rose','Atlas','Majestic','Steel','Heritage'],Women:['Velvet Rose','Musk Whisper','Rose Royale','Blush Bloom','Vanilla Muse','Pearl Jasmine','Golden Petals','Satin','Blooming Oud','Pink Amber','Luna','Divine Rose','Cashmere','White Blossom','Royal Lily','Sweet Noir','Floral Veil','Amber Rose','Crystal','Eternal Bloom','Muse','Silk','Rosewood','Dream','Chérie','Ivory Bloom','Golden Femme','Petal Noir','Grace','Belle','Radiance','Blush Oud'],Unisex:['White Oud','Amber Mist','Oud Harmony','Saffron Soul','Musk Aura','Oud Essence','Pure Amber','Velvet Oud','Citrus Oud','Desert Bloom','Royal Musk','Oud & Rose','Amber Woods','Golden Musk','Mystic Oud','Soft Leather','Sandal Veil','Arabian Nights','White Musk','Oud Reserve','Amber Noir','Sacred Oud','Musk & Saffron','Silk Oud','Signature','Elixir One','Elixir Two','Elixir Three','Elixir Four','Elixir Five','Elixir Six']};
-const palettes={Men:['#171717','#1d2834','#2c241f','#172022'],Women:['#9d6d68','#d8b9ad','#f0c7c8','#8e6c62'],Unisex:['#25261f','#5d4a2c','#d0c4a5','#6b735a']};const top=['Bergamot','Saffron','Pink Pepper','Lemon','Pear','Apple','Lavender','Cardamom'],middle=['Oud','Rose','Jasmine','Iris','Geranium','White Flowers','Violet','Orange Blossom'],base=['Musk','Amber','Sandalwood','Vanilla','Patchouli','Cedarwood','Leather','Tonka'];
-let products=[];let filter='All';let cart=JSON.parse(localStorage.getItem('pd_cart')||'[]');let wishlist=new Set(JSON.parse(localStorage.getItem('pd_wishlist')||'[]'));let users=JSON.parse(localStorage.getItem('pd_users')||'[]');let orders=JSON.parse(localStorage.getItem('pd_orders')||'[]');let idx=0;
-for(const cat of ['Men','Women','Unisex'])names[cat].forEach((name,i)=>{idx++;let bp=2299+(i%9)*200+(cat==='Men'?300:cat==='Women'?200:100);products.push({id:idx,name,category:cat,price:bp,sale:bp-(i%4===0?300:0),old:bp,top:`${top[i%top.length]}, ${top[(i+2)%top.length]}`,middle:`${middle[i%middle.length]}, ${middle[(i+3)%middle.length]}`,base:`${base[i%base.length]}, ${base[(i+4)%base.length]}`,family:i%3===0?'Woody':i%3===1?'Floral':'Oriental',size:'50ml / 100ml',color:palettes[cat][i%4],badge:i<3?'BEST SELLER':i===3?'NEW':''})});
-function money(n){return 'Rs. '+Number(n).toLocaleString('en-PK')}function save(){localStorage.setItem('pd_cart',JSON.stringify(cart));localStorage.setItem('pd_wishlist',JSON.stringify([...wishlist]));localStorage.setItem('pd_users',JSON.stringify(users));localStorage.setItem('pd_orders',JSON.stringify(orders));}
-function card(p){return `<article class="product"><div class="product-img"><span class="badge">${p.badge||''}</span><button class="heart" onclick="toggleWish(${p.id})">${wishlist.has(p.id)?'♥':'♡'}</button><button style="border:0;background:none" onclick="openProduct(${p.id})"><div class="mini-bottle" style="--bottle:${p.color}"><div class="mini-label"><strong>PD</strong><small>ELIXIR</small>${p.name}</div></div></button></div><div class="product-info"><h3>${p.name}</h3><p>${p.category} • ${p.family} • ${p.size}</p><div class="stars">★★★★★ <span>(${20+p.id%140})</span></div><div class="price">${money(p.sale)} ${p.sale<p.old?`<del>${money(p.old)}</del>`:''}</div><div class="product-actions"><button onclick="addCart(${p.id})">Add to Cart</button><button onclick="buyNow(${p.id})">Buy Now</button></div></div></article>`}
-function renderProducts(){let arr=[...products];if(filter!=='All')arr=arr.filter(p=>p.category===filter);let s=document.getElementById('sort').value;if(s==='low')arr.sort((a,b)=>a.sale-b.sale);if(s==='high')arr.sort((a,b)=>b.sale-a.sale);if(s==='new')arr.sort((a,b)=>b.id-a.id);document.getElementById('productGrid').innerHTML=arr.map(card).join('')}
-function renderFeatured(){document.getElementById('featuredGrid').innerHTML=products.slice(0,5).map(card).join('')}
-function setFilter(v,el){filter=v;document.querySelectorAll('.chips button').forEach(b=>b.classList.remove('active'));if(el)el.classList.add('active');document.getElementById('shop').scrollIntoView();renderProducts()}function filterCategory(v){filter=v;document.querySelectorAll('.chips button').forEach(b=>b.classList.toggle('active',b.textContent===v));document.getElementById('shop').scrollIntoView();renderProducts()}function showAll(){filter='All';renderProducts()}
-function toggleWish(id){wishlist.has(id)?wishlist.delete(id):wishlist.add(id);save();updateCounts();renderProducts();renderFeatured();toast(wishlist.has(id)?'Added to wishlist':'Removed from wishlist')}function updateCounts(){document.getElementById('wishCount').textContent=wishlist.size;document.getElementById('cartCount').textContent=cart.reduce((a,b)=>a+b.qty,0)}
-function addCart(id){let x=cart.find(i=>i.id===id);x?x.qty++:cart.push({id,qty:1,size:'50ml'});save();updateCounts();toast('Added to cart')}
-function removeCart(id){cart=cart.filter(x=>x.id!==id);save();openCart();updateCounts()}function changeQty(id,d){let x=cart.find(i=>i.id===id);if(x){x.qty+=d;if(x.qty<1)cart=cart.filter(i=>i.id!==id)}save();openCart();updateCounts()}
-function openCart(){let sub=cart.reduce((s,x)=>s+products.find(p=>p.id===x.id).sale*x.qty,0),ship=sub>=3000?0:200;openModal(`<button class="close" onclick="closeModal()">×</button><h2>Your Cart</h2>${cart.length?cart.map(x=>{let p=products.find(q=>q.id===x.id);return `<div class="cart-row"><div class="cart-thumb" style="background:${p.color}"></div><div><b>${p.name}</b><small>${p.category} • ${x.size}</small><div class="qty"><button onclick="changeQty(${p.id},-1)">−</button>${x.qty}<button onclick="changeQty(${p.id},1)">+</button><button onclick="removeCart(${p.id})">Remove</button></div></div><b>${money(p.sale*x.qty)}</b></div>`}).join('')+`<p>Subtotal: <b>${money(sub)}</b></p><p>Shipping: <b>${ship?money(ship):'FREE'}</b></p><h3>Total: ${money(sub+ship)}</h3><button class="btn gold" onclick="checkout()">Proceed to Checkout</button>`:'<p>Your cart is empty.</p>'}`)}
-function openWishlist(){let items=products.filter(p=>wishlist.has(p.id));openModal(`<button class="close" onclick="closeModal()">×</button><h2>Wishlist</h2>${items.length?items.map(p=>`<p><b>${p.name}</b> — ${money(p.sale)} <button onclick="addCart(${p.id})">Add</button></p>`).join(''):'<p>Your wishlist is empty.</p>'}`)}
-function openProduct(id){let p=products.find(x=>x.id===id);openModal(`<button class="close" onclick="closeModal()">×</button><div class="detail"><div class="detail-bottle"><div class="mini-bottle" style="--bottle:${p.color}"><div class="mini-label"><strong>PD</strong><small>ELIXIR</small>${p.name}</div></div></div><div><p class="eyebrow">${p.category.toUpperCase()} • ${p.family.toUpperCase()}</p><h2>${p.name}</h2><div class="stars">★★★★★ (4.9)</div><h3>${money(p.sale)} <del style="color:#aaa;font-size:13px">${money(p.old)}</del></h3><p>Available sizes: <b>50ml</b> and <b>100ml</b></p><div class="notes"><div><b>Top Notes</b><br>${p.top}</div><div><b>Middle Notes</b><br>${p.middle}</div><div><b>Base Notes</b><br>${p.base}</div></div><p><b>Longevity:</b> 8–10 hours &nbsp; <b>Sillage:</b> Strong</p><p>Designed as an original PD Elixir fragrance profile with a refined, long-lasting character for everyday luxury and special occasions.</p><button class="btn" onclick="addCart(${p.id});closeModal()">Add to Cart</button> <button class="btn gold" onclick="buyNow(${p.id})">Buy Now</button></div></div>`) }
-function checkout(){if(!cart.length)return;openModal(`<button class="close" onclick="closeModal()">×</button><h2>Secure Checkout</h2><form class="form" onsubmit="placeOrder(event)"><input name="name" required placeholder="Full Name"><input name="phone" required placeholder="Phone Number"><input name="email" required type="email" placeholder="Email"><input name="address" required placeholder="Complete Address"><input name="city" required placeholder="City"><select name="payment"><option>Cash on Delivery</option><option>Online Payment — Card / Wallet</option></select><textarea name="notes" placeholder="Delivery notes"></textarea><button class="btn gold">Place Order</button></form><p style="font-size:11px;color:#777">Online payment gateway credentials are intentionally not stored in the browser; connect your merchant gateway on the secure server before going live.</p>`) }
-function placeOrder(e){e.preventDefault();let f=new FormData(e.target),sub=cart.reduce((s,x)=>s+products.find(p=>p.id===x.id).sale*x.qty,0),ship=sub>=3000?0:200;orders.push({id:'PD'+Date.now().toString().slice(-6),customer:f.get('name'),phone:f.get('phone'),total:sub+ship,payment:f.get('payment'),status:'Pending',date:new Date().toLocaleString()});cart=[];save();updateCounts();openModal(`<h2>Order Received ✓</h2><p>Thank you for choosing PD Elixir.</p><p>Your order has been recorded and our team can confirm it shortly.</p><p><b>Shipping:</b> ${ship?money(ship):'FREE'}</p><button class="btn gold" onclick="closeModal()">Continue Shopping</button>`)}
-function buyNow(id){addCart(id);checkout()}
-function openSearch(){openModal(`<button class="close" onclick="closeModal()">×</button><h2>Search PD Elixir</h2><input id="searchInput" style="width:100%;padding:15px;border:1px solid #ddd" placeholder="Search fragrance, notes or category..." oninput="searchProducts()"><div id="searchResults" style="margin-top:20px"></div>`);document.getElementById('searchInput').focus()}
-function searchProducts(){let q=document.getElementById('searchInput').value.toLowerCase();document.getElementById('searchResults').innerHTML=products.filter(p=>`${p.name} ${p.category} ${p.family} ${p.top} ${p.middle} ${p.base}`.toLowerCase().includes(q)).slice(0,12).map(p=>`<p><b>${p.name}</b> — ${p.category} — ${money(p.sale)} <button onclick="openProduct(${p.id})">View</button></p>`).join('')||'<p>No fragrance found.</p>'}
-function openAuth(){openModal(`<button class="close" onclick="closeModal()">×</button><h2>Welcome to PD Elixir</h2><div class="admin-note">Create a customer account to save your wishlist, addresses and orders.</div><form class="form" onsubmit="login(event)"><input name="email" required type="email" placeholder="Email"><input name="password" required type="password" placeholder="Password"><button class="btn gold">Log In</button></form><hr><button class="btn" onclick="signupForm()">Create Account</button>`)}
-function signupForm(){openModal(`<button class="close" onclick="closeModal()">×</button><h2>Create your account</h2><form class="form" onsubmit="signup(event)"><input name="name" required placeholder="Full Name"><input name="email" required type="email" placeholder="Email"><input name="phone" required placeholder="Phone Number"><input name="password" required type="password" minlength="6" placeholder="Password (6+ characters)"><button class="btn gold">Create Account</button></form>`)}function signup(e){e.preventDefault();let f=new FormData(e.target);if(users.some(u=>u.email===f.get('email')))return toast('Account already exists');users.push({name:f.get('name'),email:f.get('email'),phone:f.get('phone'),password:f.get('password')});save();closeModal();toast('Account created successfully')}
-function login(e){e.preventDefault();let f=new FormData(e.target),u=users.find(x=>x.email===f.get('email')&&x.password===f.get('password'));if(!u)return toast('Invalid demo login details');closeModal();toast(`Welcome, ${u.name}`)}
-function trackOrder(){openModal(`<button class="close" onclick="closeModal()">×</button><h2>Track Your Order</h2><form class="form" onsubmit="event.preventDefault();let id=this.elements.id.value.trim();let o=orders.find(x=>x.id===id);document.getElementById('trackResult').innerHTML=o?'<b>'+o.id+'</b> — '+o.status+' — '+money(o.total):'Order not found';"><input name="id" placeholder="Order ID e.g. PD123456" required><button class="btn gold">Track</button></form><p id="trackResult"></p>`)}
-function subscribe(e){e.preventDefault();e.target.reset();toast('You are subscribed to PD Elixir updates')}
-function openModal(html){document.getElementById('modalContent').innerHTML=html;document.getElementById('modal').classList.add('open')}function closeModal(){document.getElementById('modal').classList.remove('open')}function toast(msg){let t=document.createElement('div');t.className='toast';t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),2200)}
-updateCounts();renderFeatured();renderProducts();
-function openAdmin(){
+(() => {
+const names={
+Men:['Noir Intense','Royal Oud','Azure Blue','Imperial Leather','Midnight Musk','Sultan Noir','Cedar Crown','Velvet Smoke','Amber Knight','Ocean Drive','Black Vetiver','Urban Oud','Royal Amber','Nightfall','Spice Route','Leather Reserve','Dark Cedar','Eclipse','Gentleman','Blue Monarch','Oud Legend','Silver Musk','Golden Oud','Sapphire Night','Executive','Black Saffron','Crown','Desert King','Classic Man','Platinum Oud','Voyage','Iconic','Dark Rose','Atlas','Majestic','Steel','Heritage'],
+Women:['Velvet Rose','Musk Whisper','Rose Royale','Blush Bloom','Vanilla Muse','Pearl Jasmine','Golden Petals','Satin','Blooming Oud','Pink Amber','Luna','Divine Rose','Cashmere','White Blossom','Royal Lily','Sweet Noir','Floral Veil','Amber Rose','Crystal','Eternal Bloom','Muse','Silk','Rosewood','Dream','Chérie','Ivory Bloom','Golden Femme','Petal Noir','Grace','Belle','Radiance','Blush Oud'],
+Unisex:['White Oud','Amber Mist','Oud Harmony','Saffron Soul','Musk Aura','Oud Essence','Pure Amber','Velvet Oud','Citrus Oud','Desert Bloom','Royal Musk','Oud & Rose','Amber Woods','Golden Musk','Mystic Oud','Soft Leather','Sandal Veil','Arabian Nights','White Musk','Oud Reserve','Amber Noir','Sacred Oud','Musk & Saffron','Silk Oud','Signature','Elixir One','Elixir Two','Elixir Three','Elixir Four','Elixir Five','Elixir Six']
+};
+
+const palettes={
+Men:['#171717','#1d2834','#2c241f','#172022'],
+Women:['#9d6d68','#d8b9ad','#f0c7c8','#8e6c62'],
+Unisex:['#25261f','#5d4a2c','#d0c4a5','#6b735a']
+};
+
+const top=['Bergamot','Saffron','Pink Pepper','Lemon','Pear','Apple','Lavender','Cardamom'];
+const middle=['Oud','Rose','Jasmine','Iris','Geranium','White Flowers','Violet','Orange Blossom'];
+const base=['Musk','Amber','Sandalwood','Vanilla','Patchouli','Cedarwood','Leather','Tonka'];
+
+let products=[];
+let filter='All';
+let cart=JSON.parse(localStorage.getItem('pd_cart')||'[]');
+let wishlist=new Set(JSON.parse(localStorage.getItem('pd_wishlist')||'[]'));
+let users=JSON.parse(localStorage.getItem('pd_users')||'[]');
+let orders=JSON.parse(localStorage.getItem('pd_orders')||'[]');
+let idx=0;
+
+for(const cat of ['Men','Women','Unisex']){
+  names[cat].forEach((name,i)=>{
+    idx++;
+    let bp=2299+(i%9)*200+(cat==='Men'?300:cat==='Women'?200:100);
+    products.push({
+      id:idx,
+      name,
+      category:cat,
+      price:bp,
+      sale:bp-(i%4===0?300:0),
+      old:bp,
+      top:`${top[i%top.length]}, ${top[(i+2)%top.length]}`,
+      middle:`${middle[i%middle.length]}, ${middle[(i+3)%middle.length]}`,
+      base:`${base[i%base.length]}, ${base[(i+4)%base.length]}`,
+      family:i%3===0?'Woody':i%3===1?'Floral':'Oriental',
+      size:'50ml / 100ml',
+      color:palettes[cat][i%4],
+      badge:i<3?'BEST SELLER':i===3?'NEW':''
+    });
+  });
+}
+
+function money(n){
+  return 'Rs. '+Number(n).toLocaleString('en-PK');
+}
+
+function save(){
+  localStorage.setItem('pd_cart',JSON.stringify(cart));
+  localStorage.setItem('pd_wishlist',JSON.stringify([...wishlist]));
+  localStorage.setItem('pd_users',JSON.stringify(users));
+  localStorage.setItem('pd_orders',JSON.stringify(orders));
+}
+
+function card(p){
+  return `<article class="product">
+    <div class="product-img">
+      <span class="badge">${p.badge||''}</span>
+      <button class="heart" onclick="toggleWish(${p.id})">${wishlist.has(p.id)?'♥':'♡'}</button>
+      <button style="border:0;background:none" onclick="openProduct(${p.id})">
+        <div class="mini-bottle" style="--bottle:${p.color}">
+          <div class="mini-label">
+            <strong>PD</strong>
+            <small>ELIXIR</small>
+            ${p.name}
+          </div>
+        </div>
+      </button>
+    </div>
+    <div class="product-info">
+      <h3>${p.name}</h3>
+      <p>${p.category} • ${p.family} • ${p.size}</p>
+      <div class="stars">★★★★★ <span>(${20+p.id%140})</span></div>
+      <div class="price">${money(p.sale)} ${p.sale<p.old?`<del>${money(p.old)}</del>`:''}</div>
+      <div class="product-actions">
+        <button onclick="addCart(${p.id})">Add to Cart</button>
+        <button onclick="buyNow(${p.id})">Buy Now</button>
+      </div>
+    </div>
+  </article>`;
+}
+
+function renderProducts(){
+  let arr=[...products];
+
+  if(filter!=='All'){
+    arr=arr.filter(p=>p.category===filter);
+  }
+
+  let sort=document.getElementById('sort');
+
+  if(sort){
+    let s=sort.value;
+    if(s==='low')arr.sort((a,b)=>a.sale-b.sale);
+    if(s==='high')arr.sort((a,b)=>b.sale-a.sale);
+    if(s==='new')arr.sort((a,b)=>b.id-a.id);
+  }
+
+  let grid=document.getElementById('productGrid');
+  if(grid)grid.innerHTML=arr.map(card).join('');
+}
+
+function renderFeatured(){
+  let grid=document.getElementById('featuredGrid');
+  if(grid)grid.innerHTML=products.slice(0,5).map(card).join('');
+}
+
+function setFilter(v,el){
+  filter=v;
+
+  document.querySelectorAll('.chips button').forEach(b=>{
+    b.classList.remove('active');
+  });
+
+  if(el)el.classList.add('active');
+
+  let shop=document.getElementById('shop');
+  if(shop)shop.scrollIntoView();
+
+  renderProducts();
+}
+
+function filterCategory(v){
+  filter=v;
+
+  document.querySelectorAll('.chips button').forEach(b=>{
+    b.classList.toggle('active',b.textContent===v);
+  });
+
+  let shop=document.getElementById('shop');
+  if(shop)shop.scrollIntoView();
+
+  renderProducts();
+}
+
+function showAll(){
+  filter='All';
+  renderProducts();
+}
+
+function toggleWish(id){
+  wishlist.has(id)?wishlist.delete(id):wishlist.add(id);
+  save();
+  updateCounts();
+  renderProducts();
+  renderFeatured();
+  toast(wishlist.has(id)?'Added to wishlist':'Removed from wishlist');
+}
+
+function updateCounts(){
+  let wish=document.getElementById('wishCount');
+  let cartCount=document.getElementById('cartCount');
+
+  if(wish)wish.textContent=wishlist.size;
+  if(cartCount)cartCount.textContent=cart.reduce((a,b)=>a+b.qty,0);
+}
+
+function addCart(id){
+  let x=cart.find(i=>i.id===id);
+  x?x.qty++:cart.push({id,qty:1,size:'50ml'});
+  save();
+  updateCounts();
+  toast('Added to cart');
+}
+
+function removeCart(id){
+  cart=cart.filter(x=>x.id!==id);
+  save();
+  openCart();
+  updateCounts();
+}
+
+function changeQty(id,d){
+  let x=cart.find(i=>i.id===id);
+
+  if(x){
+    x.qty+=d;
+    if(x.qty<1){
+      cart=cart.filter(i=>i.id!==id);
+    }
+  }
+
+  save();
+  openCart();
+  updateCounts();
+}
+
+function openCart(){
+  let sub=cart.reduce((s,x)=>{
+    let p=products.find(p=>p.id===x.id);
+    return s+(p?p.sale*x.qty:0);
+  },0);
+
+  let ship=sub>=3000?0:200;
+
   openModal(`
     <button class="close" onclick="closeModal()">×</button>
-    <h2>Admin Login</h2>
-    <form class="form" onsubmit="adminLogin(event)">
-      <input name="email" type="email" placeholder="Admin Email" required>
-      <input name="password" type="password" placeholder="Password" required>
-      <button class="btn gold">Login</button>
+    <h2>Your Cart</h2>
+
+    ${cart.length?
+      cart.map(x=>{
+        let p=products.find(q=>q.id===x.id);
+
+        return `
+        <div class="cart-row">
+          <div class="cart-thumb" style="background:${p.color}"></div>
+          <div>
+            <b>${p.name}</b>
+            <small>${p.category} • ${x.size}</small>
+            <div class="qty">
+              <button onclick="changeQty(${p.id},-1)">−</button>
+              ${x.qty}
+              <button onclick="changeQty(${p.id},1)">+</button>
+              <button onclick="removeCart(${p.id})">Remove</button>
+            </div>
+          </div>
+          <b>${money(p.sale*x.qty)}</b>
+        </div>`;
+      }).join('')+
+      `<p>Subtotal: <b>${money(sub)}</b></p>
+       <p>Shipping: <b>${ship?money(ship):'FREE'}</b></p>
+       <h3>Total: ${money(sub+ship)}</h3>
+       <button class="btn gold" onclick="checkout()">Proceed to Checkout</button>`
+      :
+      '<p>Your cart is empty.</p>'
+    }
+  `);
+}
+
+function openWishlist(){
+  let items=products.filter(p=>wishlist.has(p.id));
+
+  openModal(`
+    <button class="close" onclick="closeModal()">×</button>
+    <h2>Wishlist</h2>
+    ${
+      items.length?
+      items.map(p=>`
+        <p>
+          <b>${p.name}</b> — ${money(p.sale)}
+          <button onclick="addCart(${p.id})">Add</button>
+        </p>
+      `).join(''):
+      '<p>Your wishlist is empty.</p>'
+    }
+  `);
+}
+
+function openProduct(id){
+  let p=products.find(x=>x.id===id);
+  if(!p)return;
+
+  openModal(`
+    <button class="close" onclick="closeModal()">×</button>
+
+    <div class="detail">
+      <div class="detail-bottle">
+        <div class="mini-bottle" style="--bottle:${p.color}">
+          <div class="mini-label">
+            <strong>PD</strong>
+            <small>ELIXIR</small>
+            ${p.name}
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <p class="eyebrow">${p.category.toUpperCase()} • ${p.family.toUpperCase()}</p>
+        <h2>${p.name}</h2>
+        <div class="stars">★★★★★ (4.9)</div>
+        <h3>${money(p.sale)} <del style="color:#aaa;font-size:13px">${money(p.old)}</del></h3>
+        <p>Available sizes: <b>50ml</b> and <b>100ml</b></p>
+
+        <div class="notes">
+          <div><b>Top Notes</b><br>${p.top}</div>
+          <div><b>Middle Notes</b><br>${p.middle}</div>
+          <div><b>Base Notes</b><br>${p.base}</div>
+        </div>
+
+        <p><b>Longevity:</b> 8–10 hours &nbsp; <b>Sillage:</b> Strong</p>
+
+        <p>
+          Designed as an original PD Elixir fragrance profile with a refined,
+          long-lasting character for everyday luxury and special occasions.
+        </p>
+
+        <button class="btn" onclick="addCart(${p.id});closeModal()">Add to Cart</button>
+        <button class="btn gold" onclick="buyNow(${p.id})">Buy Now</button>
+      </div>
+    </div>
+  `);
+}
+  function checkout(){
+  if(!cart.length)return;
+
+  openModal(`
+    <button class="close" onclick="closeModal()">×</button>
+    <h2>Secure Checkout</h2>
+
+    <form class="form" onsubmit="placeOrder(event)">
+      <input name="name" required placeholder="Full Name">
+      <input name="phone" required placeholder="Phone Number">
+      <input name="email" required type="email" placeholder="Email">
+      <input name="address" required placeholder="Complete Address">
+      <input name="city" required placeholder="City">
+
+      <select name="payment">
+        <option>Cash on Delivery</option>
+        <option>Online Payment — Card / Wallet</option>
+      </select>
+
+      <textarea name="notes" placeholder="Delivery notes"></textarea>
+
+      <button class="btn gold">Place Order</button>
+    </form>
+
+    <p style="font-size:11px;color:#777">
+      Online payment gateway credentials are intentionally not stored in the browser.
+    </p>
+  `);
+}
+
+function placeOrder(e){
+  e.preventDefault();
+
+  let f=new FormData(e.target);
+
+  let sub=cart.reduce((s,x)=>{
+    let p=products.find(p=>p.id===x.id);
+    return s+(p?p.sale*x.qty:0);
+  },0);
+
+  let ship=sub>=3000?0:200;
+
+  orders.push({
+    id:'PD'+Date.now().toString().slice(-6),
+    customer:f.get('name'),
+    phone:f.get('phone'),
+    total:sub+ship,
+    payment:f.get('payment'),
+    status:'Pending',
+    date:new Date().toLocaleString()
+  });
+
+  cart=[];
+  save();
+  updateCounts();
+
+  openModal(`
+    <h2>Order Received ✓</h2>
+    <p>Thank you for choosing PD Elixir.</p>
+    <p>Your order has been recorded and our team can confirm it shortly.</p>
+    <p><b>Shipping:</b> ${ship?money(ship):'FREE'}</p>
+    <button class="btn gold" onclick="closeModal()">Continue Shopping</button>
+  `);
+}
+
+function buyNow(id){
+  addCart(id);
+  checkout();
+}
+
+function openSearch(){
+  openModal(`
+    <button class="close" onclick="closeModal()">×</button>
+    <h2>Search PD Elixir</h2>
+
+    <input
+      id="searchInput"
+      style="width:100%;padding:15px;border:1px solid #ddd"
+      placeholder="Search fragrance, notes or category..."
+      oninput="searchProducts()"
+    >
+
+    <div id="searchResults" style="margin-top:20px"></div>
+  `);
+
+  let input=document.getElementById('searchInput');
+  if(input)input.focus();
+}
+
+function searchProducts(){
+  let input=document.getElementById('searchInput');
+  let results=document.getElementById('searchResults');
+
+  if(!input||!results)return;
+
+  let q=input.value.toLowerCase();
+
+  results.innerHTML=products
+    .filter(p=>`${p.name} ${p.category} ${p.family} ${p.top} ${p.middle} ${p.base}`
+    .toLowerCase()
+    .includes(q))
+    .slice(0,12)
+    .map(p=>`
+      <p>
+        <b>${p.name}</b> — ${p.category} — ${money(p.sale)}
+        <button onclick="openProduct(${p.id})">View</button>
+      </p>
+    `)
+    .join('') || '<p>No fragrance found.</p>';
+}
+
+function openAuth(){
+  openModal(`
+    <button class="close" onclick="closeModal()">×</button>
+    <h2>Welcome to PD Elixir</h2>
+
+    <div class="admin-note">
+      Create a customer account to save your wishlist, addresses and orders.
+    </div>
+
+    <form class="form" onsubmit="login(event)">
+      <input name="email" required type="email" placeholder="Email">
+      <input name="password" required type="password" placeholder="Password">
+      <button class="btn gold">Log In</button>
+    </form>
+
+    <hr>
+
+    <button class="btn" onclick="signupForm()">Create Account</button>
+  `);
+}
+
+function signupForm(){
+  openModal(`
+    <button class="close" onclick="closeModal()">×</button>
+    <h2>Create your account</h2>
+
+    <form class="form" onsubmit="signup(event)">
+      <input name="name" required placeholder="Full Name">
+      <input name="email" required type="email" placeholder="Email">
+      <input name="phone" required placeholder="Phone Number">
+      <input name="password" required type="password" minlength="6" placeholder="Password (6+ characters)">
+      <button class="btn gold">Create Account</button>
     </form>
   `);
 }
 
-function adminLogin(e){
+function signup(e){
   e.preventDefault();
+
   let f=new FormData(e.target);
-  if(f.get('email')==='admin@pdelixir.com' && f.get('password')==='123456'){
-    closeModal();
-    toast('Admin login successful');
-  }else{
-    toast('Wrong admin details');
+
+  if(users.some(u=>u.email===f.get('email'))){
+    return toast('Account already exists');
   }
+
+  users.push({
+    name:f.get('name'),
+    email:f.get('email'),
+    phone:f.get('phone'),
+    password:f.get('password')
+  });
+
+  save();
+  closeModal();
+  toast('Account created successfully');
 }
-window.openAdmin = openAdmin;
-window.openAdmin = openAdmin;
-window.closeModal = closeModal;
-window.adminLogin = adminLogin;
+
+function login(e){
+  e.preventDefault();
+
+  let f=new FormData(e.target);
+
+  let u=users.find(
+    x=>x.email===f.get('email') &&
+       x.password===f.get('password')
+  );
+
+  if(!u){
+    return toast('Invalid demo login details');
+  }
+
+  closeModal();
+  toast(`Welcome, ${u.name}`);
+}
+
+function trackOrder(){
+  openModal(`
+    <button class="close" onclick="closeModal()">×</button>
+    <h2>Track Your Order</h2>
+
+    <form class="form" onsubmit="
+      event.preventDefault();
+      let id=this.elements.id.value.trim();
+      let o=orders.find(x=>x.id===id);
+      document.getElementById('trackResult').innerHTML=
+      o
+      ? '<b>'+o.id+'</b> — '+o.status+' — '+money(o.total)
+      : 'Order not found';
+    ">
+      <input name="id" placeholder="Order ID e.g. PD123456" required>
+      <button class="btn gold">Track</button>
+    </form>
+
+    <p id="trackResult"></p>
+  `);
+}
+  function subscribe(e){
+  e.preventDefault();
+  e.target.reset();
+  toast('You are subscribed to PD Elixir updates');
+}
+
+function openModal(html){
+  document.getElementById('modalContent').innerHTML=html;
+  document.getElementById('modal').classList.add('open');
+}
+
+function closeModal(){
+  document.getElementById('modal').classList.remove('open');
+}
+
+function toast(msg){
+  let t=document.createElement('div');
+  t.className='toast';
+  t.textContent=msg;
+  document.body.appendChild(t);
+
+  setTimeout(()=>{
+    t.remove();
+  },2200);
+}
+
+updateCounts();
+renderFeatured();
+renderProducts();
